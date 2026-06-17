@@ -3,241 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宜蘭三天兩夜行程規畫器</title>
+    <title>宜蘭三天兩夜 行程規畫器 (十條黃金路線)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .selected {
+        .selected-route {
             border-color: #3b82f6;
             background-color: #eff6ff;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans text-gray-800">
-    <div class="max-w-4xl mx-auto p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto p-4 sm:p-8">
         <header class="text-center mb-10">
             <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">宜蘭三天兩夜 行程規畫器</h1>
-            <p class="text-gray-600">請為每一天的各個時段選擇一個您最喜歡的行程</p>
+            <p class="text-gray-600">十大人氣主題路線，輕鬆規劃您的完美宜蘭之旅</p>
         </header>
 
-        <div id="itinerary-container" class="space-y-12">
-            <!-- Content will be injected here by JS -->
-        </div>
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 左側：主題路線列表 -->
+            <div class="w-full lg:w-1/3 space-y-4" id="routes-container">
+                <h2 class="text-2xl font-bold mb-4">選擇主題路線</h2>
+                <!-- Routes will be injected here -->
+            </div>
 
-        <div class="mt-12 text-center">
-            <button id="generate-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
-                產生我的專屬行程表
-            </button>
-        </div>
-
-        <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-lg w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">您的專屬宜蘭行程</h2>
-                    <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-                </div>
-                <div id="result-content" class="space-y-6">
-                    <!-- Result will be injected here -->
-                </div>
-                <div class="mt-8 text-center">
-                    <button id="close-modal-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded transition duration-300">
-                        關閉
-                    </button>
+            <!-- 右側：行程詳細內容 -->
+            <div class="w-full lg:w-2/3">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-8" id="itinerary-details">
+                    <div class="text-center text-gray-500 py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        <p class="text-lg">請從左側選擇一條路線，查看詳細行程</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 結果 Modal -->
+    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">您的專屬宜蘭行程</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="result-content" class="space-y-6">
+                <!-- Result will be injected here -->
+            </div>
+            <div class="mt-8 text-center flex justify-center gap-4">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition duration-300">
+                    列印行程
+                </button>
+                <button onclick="closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded transition duration-300">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const itineraryData = [
+        const routes = [
             {
-                day: 1,
-                title: '第一天：頭城與礁溪之旅',
-                slots: [
-                    {
-                        time: '早上',
-                        options: [
-                            { id: 'd1-m1', name: '蘭陽博物館', desc: '認識宜蘭的自然與人文，獨特的單面山建築。' },
-                            { id: 'd1-m2', name: '烏石港衝浪/賞鯨', desc: '體驗刺激的水上活動，或乘船尋訪龜山島。' }
-                        ]
-                    },
-                    {
-                        time: '下午',
-                        options: [
-                            { id: 'd1-a1', name: '外澳伯朗咖啡城堡', desc: '在山丘上喝咖啡，俯瞰烏石港與龜山島美景。' },
-                            { id: 'd1-a2', name: '礁溪湯圍溝溫泉公園', desc: '享受免費泡腳池，體驗溫泉魚咬腳的樂趣。' }
-                        ]
-                    },
-                    {
-                        time: '晚上',
-                        options: [
-                            { id: 'd1-n1', name: '羅東夜市', desc: '品嚐當歸羊肉湯、蔥肉串等在地人氣小吃。' },
-                            { id: 'd1-n2', name: '礁溪市區美食', desc: '吃蔥油餅、拉麵，飯後回飯店享受溫泉。' }
-                        ]
-                    }
+                id: 'route1',
+                name: '【全家親子童樂線】',
+                target: '全家出遊、有活力充沛的小孩',
+                desc: '適合帶孩子放電，近距離接觸動物與DIY體驗。',
+                days: [
+                    { day: 1, morning: '[玩] 張美阿嬤農場 (餵水豚、穿和服)', afternoon: '[玩] 蜡藝蠟筆城堡 (DIY蠟筆)', night: '[吃][喝] 羅東夜市吃美食與手搖飲' },
+                    { day: 2, morning: '[玩][買] 宜蘭傳藝中心 (看戲、手作、買古早味童玩)', afternoon: '[玩] 冬山河親水公園 (騎單車、搭船)', night: '[吃][喝] 礁溪市區晚餐、泡溫泉' },
+                    { day: 3, morning: '[玩][吃] 清水地熱公園 (煮溫泉蛋與玉米)', afternoon: '[玩] 梅花湖風景區 (搭船、協力車)', night: '[買] 採買宜蘭伴手禮 (奕順軒奶凍捲) 後快樂賦歸' }
                 ]
             },
             {
-                day: 2,
-                title: '第二天：冬山與五結文青行',
-                slots: [
-                    {
-                        time: '早上',
-                        options: [
-                            { id: 'd2-m1', name: '國立傳統藝術中心', desc: '漫步復古街道，體驗傳統工藝與看戲。' },
-                            { id: 'd2-m2', name: '冬山河親水公園', desc: '騎乘自行車環湖，享受寬闊的水岸風光。' }
-                        ]
-                    },
-                    {
-                        time: '下午',
-                        options: [
-                            { id: 'd2-a1', name: '斑比山丘', desc: '與梅花鹿近距離互動，適合拍照打卡的園區。' },
-                            { id: 'd2-a2', name: '梅花湖風景區', desc: '租台協力車環湖，或搭船遊湖，享受悠閒午後。' }
-                        ]
-                    },
-                    {
-                        time: '晚上',
-                        options: [
-                            { id: 'd2-n1', name: '宜蘭東門夜市', desc: '在地人愛去的夜市，彭蔥油餅、嘟好燒必吃。' },
-                            { id: 'd2-n2', name: '兔子迷宮景觀餐廳', desc: '眺望蘭陽平原百萬夜景，浪漫晚餐時光。' }
-                        ]
-                    }
+                id: 'route2',
+                name: '【長青慢活尊榮線】',
+                target: '有長者同行、步調緩慢、重視舒適度與無障礙空間',
+                desc: '行程輕鬆無負擔，享受溫泉與人文歷史氣息。',
+                days: [
+                    { day: 1, morning: '[玩][喝] 宜蘭設治紀念館 & 宜蘭文學館 (品茶)', afternoon: '[玩] 礁溪溫泉公園 (免費泡腳)', night: '[吃][喝] 飯店享用無菜單精緻晚餐' },
+                    { day: 2, morning: '[玩][買] 養蜂人家蜂采館 (免費導覽、買蜂蜜)', afternoon: '[玩] 羅東林業文化園區 (平緩步道散步)', night: '[吃] 羅東市區在地合菜餐廳' },
+                    { day: 3, morning: '[玩] 蘭陽博物館 (電梯無障礙設施完善)', afternoon: '[吃][喝] 外澳伯朗咖啡城堡 (喝咖啡吃點心看海)', night: '[買] 採買鴨賞、牛舌餅名產後賦歸' }
                 ]
             },
             {
-                day: 3,
-                title: '第三天：大自然與市區巡禮',
-                slots: [
-                    {
-                        time: '早上',
-                        options: [
-                            { id: 'd3-m1', name: '清水地熱公園', desc: '體驗竹簍煮溫泉蛋、玉米，還能泡腳放鬆。' },
-                            { id: 'd3-m2', name: '太平山國家森林遊樂區', desc: '搭乘蹦蹦車，漫步在見晴懷古步道。(車程較長)' }
-                        ]
-                    },
-                    {
-                        time: '下午',
-                        options: [
-                            { id: 'd3-a1', name: '幾米主題廣場', desc: '走進繪本世界，與向左走向右走主角合影。' },
-                            { id: 'd3-a2', name: '宜蘭酒廠 (甲子蘭酒文物館)', desc: '了解釀酒歷史，購買紅麴伴手禮。' }
-                        ]
-                    },
-                    {
-                        time: '晚上',
-                        options: [
-                            { id: 'd3-n1', name: '購買伴手禮賦歸', desc: '採買牛舌餅、鴨賞、奶凍捲，快樂回家。' }
-                        ]
-                    }
+                id: 'route3',
+                name: '【網美IG打卡爆紅線】',
+                target: '網美、年輕朋友、熱愛拍照打卡者',
+                desc: '收集宜蘭最夯的拍照秘境與海景咖啡廳。',
+                days: [
+                    { day: 1, morning: '[吃][喝][玩] 滿山望海 (超美海景咖啡廳)', afternoon: '[買][喝] 頭城星巴克遊艇門市 (買特色馬克杯)', night: '[吃][喝][玩] 空ㄟ農場 (百萬夜景景觀餐廳)' },
+                    { day: 2, morning: '[玩] 壯圍沙丘旅遊服務園區 (特色建築)', afternoon: '[玩][買] 中興文化創意園區 (工業風廢墟照、文創市集)', night: '[吃][喝] 宜蘭東門夜市尋寶' },
+                    { day: 3, morning: '[玩] 慶和橋津梅棧道 (河畔鐵橋美照)', afternoon: '[吃][喝][玩] 兔子迷宮景觀餐廳', night: '[買] 宜蘭火車站周邊採買特色伴手禮' }
+                ]
+            },
+            {
+                id: 'route4',
+                name: '【戶外極限冒險挑戰線】',
+                target: '年輕人、喜愛刺激、熱愛戶外體能活動者',
+                desc: '上山下海，挑戰自我體能的極限之旅。',
+                days: [
+                    { day: 1, morning: '[玩] 烏石港衝浪體驗', afternoon: '[玩] 外澳飛行傘 (俯瞰蘭陽平原)', night: '[吃][喝] 頭城市區大啖海鮮與啤酒' },
+                    { day: 2, morning: '[玩][買] 龜山島登島 + 繞島賞鯨 (烏石港買海產)', afternoon: '[玩] 五峰旗瀑布攻頂', night: '[吃][喝] 礁溪熱炒店補充體力' },
+                    { day: 3, morning: '[玩] 東澳粉鳥林獨木舟/SUP', afternoon: '[玩] 南澳碧候溫泉 (野溪秘境)', night: '[買] 蘇澳服務區採買特產後快樂賦歸' }
+                ]
+            },
+            {
+                id: 'route5',
+                name: '【深度人文歷史文青線】',
+                target: '喜愛文化歷史、工藝藝術、安靜慢行者',
+                desc: '深入了解宜蘭在地文化、建築與藝術發展。',
+                days: [
+                    { day: 1, morning: '[玩][吃] 頭城老街巡禮 (看清代建築、吃阿伯蔥油餅)', afternoon: '[玩][買] 蘭陽博物館 (認識宜蘭歷史與文創商店)', night: '[玩][吃] 礁溪老街散策與晚餐' },
+                    { day: 2, morning: '[玩] 宜蘭美術館 (欣賞在地藝術)', afternoon: '[喝][玩] 百果樹紅磚屋 (聽故事喝咖啡)', night: '[吃][喝] 宜蘭市區特色咖啡小酒館' },
+                    { day: 3, morning: '[玩][買] 國立傳統藝術中心 (傳統工藝與紀念品)', afternoon: '[玩][買] 二結穀倉稻農文化館 (買文創農產品)', night: '[買] 宜蘭市區買花生糖等老店伴手禮' }
+                ]
+            },
+            {
+                id: 'route6',
+                name: '【蘭陽平原吃貨饕客線】',
+                target: '美食愛好者、吃貨、到處尋訪在地小吃者',
+                desc: '從早吃到晚，把宜蘭最知名的美食一網打盡。',
+                days: [
+                    { day: 1, morning: '[吃][玩] 礁溪柯氏蔥油餅 & 吳記花生捲冰淇淋', afternoon: '[吃][喝] 礁溪火山爆發雞/甕窯雞', night: '[吃][喝][買] 羅東夜市 (阿灶伯當歸羊肉與特色服飾)' },
+                    { day: 2, morning: '[吃] 正常鮮肉小籠包 (宜蘭市)', afternoon: '[吃][喝] 蒜味肉羹 & 北門綠豆沙牛乳', night: '[吃][玩] 東門夜市 (彭蔥油餅、嘟好燒)' },
+                    { day: 3, morning: '[吃] 南方澳富美活海鮮', afternoon: '[吃][買] 蘇澳義珍香爆漿饅頭', night: '[買] 宜蘭酒廠買紅麴香腸與金棗名產' }
+                ]
+            },
+            {
+                id: 'route7',
+                name: '【太平山芬多精療癒線】',
+                target: '熱愛大自然、想遠離塵囂、喜愛山林漫步者',
+                desc: '沉浸在森林浴中，洗滌身心靈的疲憊。',
+                days: [
+                    { day: 1, morning: '[玩] 啟程前往太平山、見晴懷古步道', afternoon: '[玩] 搭乘太平山蹦蹦車', night: '[吃][喝] 太平山莊住宿與觀星 (享用高山晚餐)' },
+                    { day: 2, morning: '[玩] 翠峰湖環山步道 (看台灣最大高山湖泊)', afternoon: '[玩][吃] 鳩之澤溫泉 (泡湯、煮溫泉蛋)', night: '[吃] 羅東市區吃林場肉羹' },
+                    { day: 3, morning: '[玩] 林美石磐步道 (親水步道)', afternoon: '[玩] 龍潭湖風景區', night: '[買] 橘之鄉買金棗蜜餞' }
+                ]
+            },
+            {
+                id: 'route8',
+                name: '【頂級雙泉極致放鬆線】',
+                target: '上班族紓壓、情侶度假、溫泉/冷泉愛好者',
+                desc: '享受世界級的冷泉與溫泉，徹底放鬆。',
+                days: [
+                    { day: 1, morning: '[玩] 蘇澳冷泉公園 (體驗22度C碳酸冷泉)', afternoon: '[玩][喝] 豆腐岬海景與南方澳觀景台 (喝海景咖啡)', night: '[玩][吃] 入住蘇澳冷熱雙泉飯店享大餐' },
+                    { day: 2, morning: '[玩][買] 計程車博物館 (買特色小車)', afternoon: '[玩][吃] 斑比山丘 (療癒小鹿與下午茶)', night: '[玩][吃] 入住礁溪頂級溫泉飯店 (享受設施與Buffet)' },
+                    { day: 3, morning: '[玩] 飯店享受設施至退房', afternoon: '[玩] 礁溪湯圍溝漫步', night: '[買] 礁溪市區大肆採買伴手禮' }
+                ]
+            },
+            {
+                id: 'route9',
+                name: '【全天候雨天與避暑備案線】',
+                target: '怕曬怕雨、親子同行、喜愛室內觀光工廠者',
+                desc: '全室內行程，刮風下雨都不怕的完美備案。',
+                days: [
+                    { day: 1, morning: '[玩] 金車生技水產研發中心 (看鯊魚)', afternoon: '[玩][買] 橘之鄉蜜餞形象館 (DIY與買金棗)', night: '[吃][買] 新月廣場 (逛街購物、吃晚餐)' },
+                    { day: 2, morning: '[吃][買] 亞典蛋糕密碼館 & 窯烤山寨村', afternoon: '[喝][買] 金車噶瑪蘭威士忌酒廠', night: '[玩][吃] 宜蘭室內溫泉SPA與在地晚餐' },
+                    { day: 3, morning: '[喝][玩] 奇麗灣珍奶文化館 (燈泡珍奶)', afternoon: '[玩] 蠟筆工程館', night: '[買] 博士鴨觀光工廠買鴨賞' }
+                ]
+            },
+            {
+                id: 'route10',
+                name: '【學生小資高CP值省錢線】',
+                target: '學生族群、預算有限、重視交通便利與免門票景點',
+                desc: '花小錢也能玩得豐富，搭火車/公車也方便。',
+                days: [
+                    { day: 1, morning: '[玩][拍照] 幾米主題廣場 & 丟丟噹森林 (免費)', afternoon: '[玩] 五峰旗瀑布風景區 (免門票)', night: '[吃][喝] 東門夜市 (高CP值銅板美食)' },
+                    { day: 2, morning: '[玩][買] 宜蘭火車站周邊文創區 (小資文創)', afternoon: '[玩] 冬山河生態綠舟 (門票便宜)', night: '[吃] 羅東夜市吃平價小吃' },
+                    { day: 3, morning: '[玩] 頭城老街散步 (免費)', afternoon: '[玩] 外澳沙灘踏浪 (免費)', night: '[買] 諾貝爾奶凍捲 (小資必備伴手禮)' }
                 ]
             }
         ];
 
-        let selections = {};
+        let selectedRouteId = null;
 
-        function renderApp() {
-            const container = document.getElementById('itinerary-container');
-            container.innerHTML = '';
-
-            itineraryData.forEach(dayData => {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'bg-white rounded-xl shadow-md overflow-hidden';
+        function renderRoutes() {
+            const container = document.getElementById('routes-container');
+            let html = '';
+            
+            routes.forEach(route => {
+                const isSelected = selectedRouteId === route.id;
+                const cardClass = isSelected ? 'selected-route border-2 border-blue-500 shadow-lg' : 'border border-gray-200 bg-white hover:border-blue-300 hover:shadow-md';
                 
-                let dayHtml = `
-                    <div class="bg-blue-600 px-6 py-4">
-                        <h2 class="text-xl font-bold text-white">Day ${dayData.day} - ${dayData.title}</h2>
+                html += `
+                    <div onclick="selectRoute('${route.id}')" class="cursor-pointer rounded-xl p-4 transition duration-200 ${cardClass}">
+                        <h3 class="text-xl font-bold text-gray-900 mb-1">${route.name}</h3>
+                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold mb-2">${route.target}</span>
+                        <p class="text-sm text-gray-600">${route.desc}</p>
                     </div>
-                    <div class="p-6 space-y-6">
                 `;
-
-                dayData.slots.forEach(slot => {
-                    dayHtml += `
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-1">${slot.time}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    `;
-
-                    slot.options.forEach(opt => {
-                        const isSelected = selections[`${dayData.day}-${slot.time}`] === opt.id;
-                        const selectedClass = isSelected ? 'selected border-2 border-blue-500 bg-blue-50' : 'border border-gray-200 bg-white hover:border-blue-300';
-                        
-                        dayHtml += `
-                                <div onclick="selectOption(${dayData.day}, '${slot.time}', '${opt.id}')" 
-                                     class="cursor-pointer rounded-lg p-4 transition duration-200 ${selectedClass}">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-bold text-gray-900">${opt.name}</h4>
-                                        ${isSelected ? '<span class="text-blue-500 font-bold">✓</span>' : ''}
-                                    </div>
-                                    <p class="text-sm text-gray-600 mt-1">${opt.desc}</p>
-                                </div>
-                        `;
-                    });
-
-                    dayHtml += `
-                            </div>
-                        </div>
-                    `;
-                });
-
-                dayHtml += `</div>`;
-                dayDiv.innerHTML = dayHtml;
-                container.appendChild(dayDiv);
             });
+            
+            container.innerHTML = html;
         }
 
-        window.selectOption = function(day, time, optionId) {
-            selections[`${day}-${time}`] = optionId;
-            renderApp();
-        };
+        function selectRoute(id) {
+            selectedRouteId = id;
+            renderRoutes();
+            renderItinerary();
+        }
 
-        function showResult() {
-            const resultContent = document.getElementById('result-content');
-            resultContent.innerHTML = '';
+        function renderItinerary() {
+            const container = document.getElementById('itinerary-details');
+            const route = routes.find(r => r.id === selectedRouteId);
+            
+            if (!route) return;
 
-            let allSelected = true;
-            let missing = [];
+            let html = `
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                    <h2 class="text-3xl font-bold text-blue-700 mb-2">${route.name}</h2>
+                    <p class="text-gray-700 bg-blue-50 p-3 rounded-lg"><span class="font-bold">適合對象：</span>${route.target}</p>
+                </div>
+                
+                <div class="space-y-8">
+            `;
 
-            itineraryData.forEach(dayData => {
-                dayData.slots.forEach(slot => {
-                    if (!selections[`${dayData.day}-${slot.time}`]) {
-                        allSelected = false;
-                        missing.push(`Day ${dayData.day} ${slot.time}`);
-                    }
-                });
-            });
-
-            if (!allSelected) {
-                alert(`請完成所有時段的選擇！\n尚未選擇：${missing.join(', ')}`);
-                return;
-            }
-
-            itineraryData.forEach(dayData => {
-                let dayHtml = `
-                    <div class="border-l-4 border-blue-500 pl-4 mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Day ${dayData.day}: ${dayData.title}</h3>
-                        <ul class="space-y-3">
-                `;
-
-                dayData.slots.forEach(slot => {
-                    const selectedId = selections[`${dayData.day}-${slot.time}`];
-                    const selectedOpt = slot.options.find(o => o.id === selectedId);
-                    
-                    dayHtml += `
-                            <li class="flex items-start">
-                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-3 px-2.5 py-1 rounded w-12 text-center shrink-0">${slot.time}</span>
-                                <div>
-                                    <span class="font-bold text-gray-800">${selectedOpt.name}</span>
-                                    <p class="text-sm text-gray-600">${selectedOpt.desc}</p>
-                                </div>
+            route.days.forEach(d => {
+                html += `
+                    <div class="bg-gray-50 rounded-lg p-5 border-l-4 border-blue-500">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="bg-blue-600 text-white w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-sm">D${d.day}</span>
+                            第 ${d.day} 天行程
+                        </h3>
+                        <ul class="space-y-4 ml-2">
+                            <li class="flex">
+                                <span class="w-16 font-semibold text-gray-500">早上</span>
+                                <span class="text-gray-800 font-medium">${d.morning}</span>
                             </li>
-                    `;
-                });
-
-                dayHtml += `
+                            <li class="flex">
+                                <span class="w-16 font-semibold text-gray-500">下午</span>
+                                <span class="text-gray-800 font-medium">${d.afternoon}</span>
+                            </li>
+                            <li class="flex">
+                                <span class="w-16 font-semibold text-gray-500">晚上</span>
+                                <span class="text-gray-800 font-medium">${d.night}</span>
+                            </li>
                         </ul>
                     </div>
                 `;
-                resultContent.innerHTML += dayHtml;
             });
 
+            html += `
+                </div>
+                <div class="mt-8 text-center pt-6 border-t border-gray-200">
+                    <button onclick="showModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 w-full sm:w-auto">
+                        選擇此路線並預覽/列印
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function showModal() {
+            if (!selectedRouteId) return;
+            const route = routes.find(r => r.id === selectedRouteId);
+            const resultContent = document.getElementById('result-content');
+            
+            let html = `
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-blue-700">${route.name}</h3>
+                    <p class="text-gray-600 mt-2">${route.target}</p>
+                </div>
+                <div class="space-y-6">
+            `;
+
+            route.days.forEach(d => {
+                html += `
+                    <div>
+                        <h4 class="font-bold text-lg text-gray-800 mb-2 border-b pb-1">Day ${d.day}</h4>
+                        <ul class="pl-4 space-y-2">
+                            <li><span class="font-semibold text-gray-600">早上：</span> ${d.morning}</li>
+                            <li><span class="font-semibold text-gray-600">下午：</span> ${d.afternoon}</li>
+                            <li><span class="font-semibold text-gray-600">晚上：</span> ${d.night}</li>
+                        </ul>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            resultContent.innerHTML = html;
             document.getElementById('result-modal').classList.remove('hidden');
         }
 
@@ -245,12 +288,8 @@
             document.getElementById('result-modal').classList.add('hidden');
         }
 
-        document.getElementById('generate-btn').addEventListener('click', showResult);
-        document.getElementById('close-modal').addEventListener('click', closeModal);
-        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-
-        // 初始化
-        renderApp();
+        // 初始化渲染路線列表
+        renderRoutes();
     </script>
 </body>
 </html>
