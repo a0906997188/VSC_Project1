@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宜蘭三天兩夜行程規畫器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
+    <div class="max-w-4xl mx-auto p-4 sm:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">宜蘭三天兩夜 行程規畫器</h1>
+            <p class="text-gray-600">請為每一天的各個時段選擇一個您最喜歡的行程</p>
+        </header>
+
+        <div id="itinerary-container" class="space-y-12">
+            <!-- Content will be injected here by JS -->
+        </div>
+
+        <div class="mt-12 text-center">
+            <button id="generate-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
+                產生我的專屬行程表
+            </button>
+        </div>
+
+        <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">您的專屬宜蘭行程</h2>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <div id="result-content" class="space-y-6">
+                    <!-- Result will be injected here -->
+                </div>
+                <div class="mt-8 text-center">
+                    <button id="close-modal-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded transition duration-300">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const itineraryData = [
+            {
+                day: 1,
+                title: '第一天：頭城與礁溪之旅',
+                slots: [
+                    {
+                        time: '早上',
+                        options: [
+                            { id: 'd1-m1', name: '蘭陽博物館', desc: '認識宜蘭的自然與人文，獨特的單面山建築。' },
+                            { id: 'd1-m2', name: '烏石港衝浪/賞鯨', desc: '體驗刺激的水上活動，或乘船尋訪龜山島。' }
+                        ]
+                    },
+                    {
+                        time: '下午',
+                        options: [
+                            { id: 'd1-a1', name: '外澳伯朗咖啡城堡', desc: '在山丘上喝咖啡，俯瞰烏石港與龜山島美景。' },
+                            { id: 'd1-a2', name: '礁溪湯圍溝溫泉公園', desc: '享受免費泡腳池，體驗溫泉魚咬腳的樂趣。' }
+                        ]
+                    },
+                    {
+                        time: '晚上',
+                        options: [
+                            { id: 'd1-n1', name: '羅東夜市', desc: '品嚐當歸羊肉湯、蔥肉串等在地人氣小吃。' },
+                            { id: 'd1-n2', name: '礁溪市區美食', desc: '吃蔥油餅、拉麵，飯後回飯店享受溫泉。' }
+                        ]
+                    }
+                ]
+            },
+            {
+                day: 2,
+                title: '第二天：冬山與五結文青行',
+                slots: [
+                    {
+                        time: '早上',
+                        options: [
+                            { id: 'd2-m1', name: '國立傳統藝術中心', desc: '漫步復古街道，體驗傳統工藝與看戲。' },
+                            { id: 'd2-m2', name: '冬山河親水公園', desc: '騎乘自行車環湖，享受寬闊的水岸風光。' }
+                        ]
+                    },
+                    {
+                        time: '下午',
+                        options: [
+                            { id: 'd2-a1', name: '斑比山丘', desc: '與梅花鹿近距離互動，適合拍照打卡的園區。' },
+                            { id: 'd2-a2', name: '梅花湖風景區', desc: '租台協力車環湖，或搭船遊湖，享受悠閒午後。' }
+                        ]
+                    },
+                    {
+                        time: '晚上',
+                        options: [
+                            { id: 'd2-n1', name: '宜蘭東門夜市', desc: '在地人愛去的夜市，彭蔥油餅、嘟好燒必吃。' },
+                            { id: 'd2-n2', name: '兔子迷宮景觀餐廳', desc: '眺望蘭陽平原百萬夜景，浪漫晚餐時光。' }
+                        ]
+                    }
+                ]
+            },
+            {
+                day: 3,
+                title: '第三天：大自然與市區巡禮',
+                slots: [
+                    {
+                        time: '早上',
+                        options: [
+                            { id: 'd3-m1', name: '清水地熱公園', desc: '體驗竹簍煮溫泉蛋、玉米，還能泡腳放鬆。' },
+                            { id: 'd3-m2', name: '太平山國家森林遊樂區', desc: '搭乘蹦蹦車，漫步在見晴懷古步道。(車程較長)' }
+                        ]
+                    },
+                    {
+                        time: '下午',
+                        options: [
+                            { id: 'd3-a1', name: '幾米主題廣場', desc: '走進繪本世界，與向左走向右走主角合影。' },
+                            { id: 'd3-a2', name: '宜蘭酒廠 (甲子蘭酒文物館)', desc: '了解釀酒歷史，購買紅麴伴手禮。' }
+                        ]
+                    },
+                    {
+                        time: '晚上',
+                        options: [
+                            { id: 'd3-n1', name: '購買伴手禮賦歸', desc: '採買牛舌餅、鴨賞、奶凍捲，快樂回家。' }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let selections = {};
+
+        function renderApp() {
+            const container = document.getElementById('itinerary-container');
+            container.innerHTML = '';
+
+            itineraryData.forEach(dayData => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'bg-white rounded-xl shadow-md overflow-hidden';
+                
+                let dayHtml = `
+                    <div class="bg-blue-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white">Day ${dayData.day} - ${dayData.title}</h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                `;
+
+                dayData.slots.forEach(slot => {
+                    dayHtml += `
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-1">${slot.time}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    `;
+
+                    slot.options.forEach(opt => {
+                        const isSelected = selections[`${dayData.day}-${slot.time}`] === opt.id;
+                        const selectedClass = isSelected ? 'selected border-2 border-blue-500 bg-blue-50' : 'border border-gray-200 bg-white hover:border-blue-300';
+                        
+                        dayHtml += `
+                                <div onclick="selectOption(${dayData.day}, '${slot.time}', '${opt.id}')" 
+                                     class="cursor-pointer rounded-lg p-4 transition duration-200 ${selectedClass}">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-gray-900">${opt.name}</h4>
+                                        ${isSelected ? '<span class="text-blue-500 font-bold">✓</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">${opt.desc}</p>
+                                </div>
+                        `;
+                    });
+
+                    dayHtml += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                dayHtml += `</div>`;
+                dayDiv.innerHTML = dayHtml;
+                container.appendChild(dayDiv);
+            });
+        }
+
+        window.selectOption = function(day, time, optionId) {
+            selections[`${day}-${time}`] = optionId;
+            renderApp();
+        };
+
+        function showResult() {
+            const resultContent = document.getElementById('result-content');
+            resultContent.innerHTML = '';
+
+            let allSelected = true;
+            let missing = [];
+
+            itineraryData.forEach(dayData => {
+                dayData.slots.forEach(slot => {
+                    if (!selections[`${dayData.day}-${slot.time}`]) {
+                        allSelected = false;
+                        missing.push(`Day ${dayData.day} ${slot.time}`);
+                    }
+                });
+            });
+
+            if (!allSelected) {
+                alert(`請完成所有時段的選擇！\n尚未選擇：${missing.join(', ')}`);
+                return;
+            }
+
+            itineraryData.forEach(dayData => {
+                let dayHtml = `
+                    <div class="border-l-4 border-blue-500 pl-4 mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Day ${dayData.day}: ${dayData.title}</h3>
+                        <ul class="space-y-3">
+                `;
+
+                dayData.slots.forEach(slot => {
+                    const selectedId = selections[`${dayData.day}-${slot.time}`];
+                    const selectedOpt = slot.options.find(o => o.id === selectedId);
+                    
+                    dayHtml += `
+                            <li class="flex items-start">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-3 px-2.5 py-1 rounded w-12 text-center shrink-0">${slot.time}</span>
+                                <div>
+                                    <span class="font-bold text-gray-800">${selectedOpt.name}</span>
+                                    <p class="text-sm text-gray-600">${selectedOpt.desc}</p>
+                                </div>
+                            </li>
+                    `;
+                });
+
+                dayHtml += `
+                        </ul>
+                    </div>
+                `;
+                resultContent.innerHTML += dayHtml;
+            });
+
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+
+        document.getElementById('generate-btn').addEventListener('click', showResult);
+        document.getElementById('close-modal').addEventListener('click', closeModal);
+        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+
+        // 初始化
+        renderApp();
+    </script>
+</body>
+</html>
